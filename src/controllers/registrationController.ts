@@ -1,9 +1,9 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { supabase } from '../config/supabase';
-import { AuthRequest } from '../middleware/auth';
 
-export const getMyRegistrations = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getMyRegistrations = async (req: Request, res: Response): Promise<void> => {
   try {
+    const user = (req as any).user;
     const { data: registrations, error } = await supabase
       .from('registrations')
       .select(`
@@ -11,7 +11,7 @@ export const getMyRegistrations = async (req: AuthRequest, res: Response): Promi
         event:events(*),
         ticket_type:ticket_types(*)
       `)
-      .eq('user_id', req.user.id)
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -25,8 +25,9 @@ export const getMyRegistrations = async (req: AuthRequest, res: Response): Promi
   }
 };
 
-export const registerForEvent = async (req: AuthRequest, res: Response): Promise<void> => {
+export const registerForEvent = async (req: Request, res: Response): Promise<void> => {
   try {
+    const user = (req as any).user;
     const { event_id, ticket_type_id } = req.body;
     const eventId = event_id;
     const ticketTypeId = ticket_type_id;
@@ -36,7 +37,7 @@ export const registerForEvent = async (req: AuthRequest, res: Response): Promise
       .from('registrations')
       .select('*')
       .eq('event_id', eventId)
-      .eq('user_id', req.user.id)
+      .eq('user_id', user.id)
       .single();
 
     if (existingRegistration) {
@@ -72,7 +73,7 @@ export const registerForEvent = async (req: AuthRequest, res: Response): Promise
 
     let registrationData: any = {
       event_id: eventId,
-      user_id: req.user.id,
+      user_id: user.id,
       status: 'confirmed',
       payment_status: 'completed',
       payment_amount: 0,
@@ -128,7 +129,7 @@ export const registerForEvent = async (req: AuthRequest, res: Response): Promise
     await supabase
       .from('notifications')
       .insert([{
-        user_id: req.user.id,
+        user_id: user.id,
         type: 'registration_confirmed',
         title: 'Registration Confirmed',
         message: `You have successfully registered for "${event.title}"`,
@@ -148,15 +149,16 @@ export const registerForEvent = async (req: AuthRequest, res: Response): Promise
   }
 };
 
-export const cancelRegistration = async (req: AuthRequest, res: Response): Promise<void> => {
+export const cancelRegistration = async (req: Request, res: Response): Promise<void> => {
   try {
+    const user = (req as any).user;
     const { id } = req.params;
 
     const { data: registration } = await supabase
       .from('registrations')
       .select('*')
       .eq('id', id)
-      .eq('user_id', req.user.id)
+      .eq('user_id', user.id)
       .single();
 
     if (!registration) {
@@ -193,8 +195,9 @@ export const cancelRegistration = async (req: AuthRequest, res: Response): Promi
   }
 };
 
-export const getEventRegistrations = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getEventRegistrations = async (req: Request, res: Response): Promise<void> => {
   try {
+    const user = (req as any).user;
     const { eventId } = req.params;
 
     const { data: event } = await supabase
@@ -208,7 +211,7 @@ export const getEventRegistrations = async (req: AuthRequest, res: Response): Pr
       return;
     }
 
-    if (event.organizer_id !== req.user.id && req.user.role !== 'admin') {
+    if (event.organizer_id !== user.id && user.role !== 'admin') {
       res.status(403).json({ message: 'Not authorized' });
       return;
     }

@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import { supabase } from '../config/supabase';
-import { AuthRequest } from '../middleware/auth';
 
-export const getEventAnalytics = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getEventAnalytics = async (req: Request, res: Response): Promise<void> => {
   try {
+    const user = (req as any).user;
     const { eventId } = req.params;
 
     // Get event details
@@ -18,7 +18,7 @@ export const getEventAnalytics = async (req: AuthRequest, res: Response): Promis
       return;
     }
 
-    if (event.organizer_id !== req.user.id && req.user.role !== 'admin') {
+    if (event.organizer_id !== user.id && user.role !== 'admin') {
       res.status(403).json({ message: 'Not authorized' });
       return;
     }

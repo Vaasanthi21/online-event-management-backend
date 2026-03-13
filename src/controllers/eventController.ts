@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
 import { supabase } from '../config/supabase';
-import { AuthRequest } from '../middleware/auth';
 
 export const getAllEvents = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -51,7 +50,7 @@ export const getEventById = async (req: Request, res: Response): Promise<void> =
   }
 };
 
-export const createEvent = async (req: AuthRequest, res: Response): Promise<void> => {
+export const createEvent = async (req: Request, res: Response): Promise<void> => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -59,6 +58,7 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
       return;
     }
 
+    const user = (req as any).user;
     const {
       title,
       description,
@@ -88,7 +88,7 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
           max_attendees,
           is_public: is_public !== undefined ? is_public : true,
           banner_image,
-          organizer_id: req.user.id,
+          organizer_id: user.id,
           status: 'draft',
         },
       ])
@@ -106,7 +106,7 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
   }
 };
 
-export const updateEvent = async (req: AuthRequest, res: Response): Promise<void> => {
+export const updateEvent = async (req: Request, res: Response): Promise<void> => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -114,6 +114,7 @@ export const updateEvent = async (req: AuthRequest, res: Response): Promise<void
       return;
     }
 
+    const user = (req as any).user;
     const { id } = req.params;
 
     const { data: existingEvent } = await supabase
@@ -127,7 +128,7 @@ export const updateEvent = async (req: AuthRequest, res: Response): Promise<void
       return;
     }
 
-    if (existingEvent.organizer_id !== req.user.id && req.user.role !== 'admin') {
+    if (existingEvent.organizer_id !== user.id && user.role !== 'admin') {
       res.status(403).json({ message: 'Not authorized to update this event' });
       return;
     }
@@ -155,8 +156,9 @@ export const updateEvent = async (req: AuthRequest, res: Response): Promise<void
   }
 };
 
-export const deleteEvent = async (req: AuthRequest, res: Response): Promise<void> => {
+export const deleteEvent = async (req: Request, res: Response): Promise<void> => {
   try {
+    const user = (req as any).user;
     const { id } = req.params;
 
     const { data: existingEvent } = await supabase
@@ -170,7 +172,7 @@ export const deleteEvent = async (req: AuthRequest, res: Response): Promise<void
       return;
     }
 
-    if (existingEvent.organizer_id !== req.user.id && req.user.role !== 'admin') {
+    if (existingEvent.organizer_id !== user.id && user.role !== 'admin') {
       res.status(403).json({ message: 'Not authorized to delete this event' });
       return;
     }
@@ -188,12 +190,13 @@ export const deleteEvent = async (req: AuthRequest, res: Response): Promise<void
   }
 };
 
-export const getMyEvents = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getMyEvents = async (req: Request, res: Response): Promise<void> => {
   try {
+    const user = (req as any).user;
     const { data: events, error } = await supabase
       .from('events')
       .select('*')
-      .eq('organizer_id', req.user.id)
+      .eq('organizer_id', user.id)
       .order('start_date', { ascending: true });
 
     if (error) {

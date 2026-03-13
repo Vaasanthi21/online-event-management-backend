@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import { supabase } from '../config/supabase';
-import { AuthRequest } from '../middleware/auth';
 
 export const getSessions = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -26,7 +25,7 @@ export const getSessions = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-export const createSession = async (req: AuthRequest, res: Response): Promise<void> => {
+export const createSession = async (req: Request, res: Response): Promise<void> => {
   try {
     const { eventId } = req.params;
     const { title, description, start_time, end_time, session_type, speaker_ids, max_attendees, meeting_link } = req.body;
@@ -58,7 +57,7 @@ export const createSession = async (req: AuthRequest, res: Response): Promise<vo
   }
 };
 
-export const updateSession = async (req: AuthRequest, res: Response): Promise<void> => {
+export const updateSession = async (req: Request, res: Response): Promise<void> => {
   try {
     const { eventId, id } = req.params;
 
@@ -81,7 +80,7 @@ export const updateSession = async (req: AuthRequest, res: Response): Promise<vo
   }
 };
 
-export const deleteSession = async (req: AuthRequest, res: Response): Promise<void> => {
+export const deleteSession = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
 

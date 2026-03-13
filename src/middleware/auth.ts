@@ -4,8 +4,15 @@ import { supabase } from '../config/supabase';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
+export interface User {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string;
+}
+
 export interface AuthRequest extends Request {
-  user: any;
+  user: User;
 }
 
 export const authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

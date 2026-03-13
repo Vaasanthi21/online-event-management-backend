@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
 import { supabase } from '../config/supabase';
-import { AuthRequest } from '../middleware/auth';
 
-export const getFeedback = async (req: Request, res: Response): Promise<void> => {
+export const getEventFeedback = async (req: Request, res: Response): Promise<void> => {
   try {
     const { eventId } = req.params;
 
@@ -26,17 +25,19 @@ export const getFeedback = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-export const submitFeedback = async (req: AuthRequest, res: Response): Promise<void> => {
+export const submitFeedback = async (req: Request, res: Response): Promise<void> => {
   try {
     const { eventId } = req.params;
     const { session_id, overall_rating, content_rating, speaker_rating, organization_rating, comments, would_recommend } = req.body;
+    
+    const user = (req as any).user;
 
     const { data: feedback, error } = await supabase
       .from('feedback')
       .insert([{
         event_id: eventId,
         session_id,
-        user_id: req.user.id,
+        user_id: user.id,
         overall_rating,
         content_rating,
         speaker_rating,
